@@ -47,8 +47,8 @@ export default function Hero() {
             src="/profile.png"
             alt={`Portrait of ${profile.name}`}
             className={styles.portrait}
-            width={588}
-            height={770}
+            width={639}
+            height={639}
           />
           <div className={styles.portraitFrame} aria-hidden />
         </div>
