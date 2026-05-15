@@ -1,0 +1,152 @@
+.hero {
+  position: relative;
+  padding: 4rem 0 5rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-ink) 0%,
+    #2a3f54 50%,
+    var(--color-ink) 100%
+  );
+  color: #fff;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 60% at 70% 40%,
+    rgba(201, 162, 39, 0.15),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  display: grid;
+  gap: 3rem;
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .inner {
+    grid-template-columns: 1fr minmax(280px, 360px);
+    gap: 4rem;
+  }
+}
+
+.eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent-soft);
+  margin: 0 0 0.75rem;
+}
+
+.title {
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.tagline {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 1.25rem;
+}
+
+.bio {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 52ch;
+  margin: 0 0 2rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+}
+
+.hero .btn--primary {
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
+}
+
+.hero .btn--primary:hover {
+  background: #fff;
+  color: var(--color-ink);
+}
+
+.hero .btn--outline {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.hero .btn--outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+  color: #fff;
+}
+
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin: 0;
+}
+
+.contact dt {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.25rem;
+}
+
+.contact dd {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.contact a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.contact a:hover {
+  color: var(--color-accent-soft);
+}
+
+.portraitWrap {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 320px);
+}
+
+.portrait {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  object-fit: cover;
+  aspect-ratio: 3 / 4;
+}
+
+.portraitFrame {
+  position: absolute;
+  inset: -8px -8px 8px 8px;
+  border: 2px solid var(--color-accent-soft);
+  border-radius: var(--radius);
+  z-index: -1;
+  opacity: 0.6;
+}

@@ -1,0 +1,60 @@
+.footer {
+  padding: 3rem 0 2rem;
+  background: var(--color-ink);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inner {
+  display: grid;
+  gap: 2rem;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 0.25rem;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-accent-soft);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 2rem;
+}
+
+.links a {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.9375rem;
+}
+
+.links a:hover {
+  color: #fff;
+}
+
+.copy {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (min-width: 768px) {
+  .inner {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    align-items: start;
+  }
+
+  .copy {
+    grid-column: 1 / -1;
+  }
+}

@@ -1,0 +1,71 @@
+.card {
+  padding: 1.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.year {
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.journal {
+  color: var(--color-ink-muted);
+}
+
+.title {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.authors {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+
+.abstract {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--color-ink-muted);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.tags li {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  background: var(--color-bg-alt);
+  border-radius: 999px;
+  color: var(--color-ink-muted);
+}
+
+.links {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}

@@ -1,0 +1,37 @@
+.page {
+  padding-top: 0;
+}
+
+.header {
+  padding: 4rem 0 2rem;
+  background: var(--color-ink);
+  color: #fff;
+}
+
+.header .section__label {
+  color: var(--color-accent-soft);
+}
+
+.title {
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  color: #fff;
+  margin-bottom: 0.75rem;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 50ch;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
