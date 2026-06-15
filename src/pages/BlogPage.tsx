@@ -1,8 +1,21 @@
+import { useState, useEffect } from "react";
 import BlogCard from "../components/BlogCard";
-import { blogs } from "../data/blogs";
+import { blogs as staticBlogs, type BlogPost } from "../data/blogs";
 import styles from "./BlogPage.module.css";
 
 export default function BlogPage() {
+  const [dynamicBlogs, setDynamicBlogs] = useState<BlogPost[]>([]);
+
+  useEffect(() => {
+    fetch("/api/blogs")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setDynamicBlogs(data))
+      .catch(() => {});
+  }, []);
+
+  const allBlogs = [...staticBlogs, ...dynamicBlogs];
+  allBlogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -16,7 +29,7 @@ export default function BlogPage() {
       </header>
       <section className="section">
         <div className={`container ${styles.grid}`}>
-          {blogs.map((post) => (
+          {allBlogs.map((post) => (
             <BlogCard key={post.id} post={post} />
           ))}
         </div>
