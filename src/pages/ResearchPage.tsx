@@ -1,10 +1,22 @@
+import { useState, useEffect } from "react";
 import ResearchCard from "../components/ResearchCard";
 import { profile } from "../data/profile";
-import { researchPapers } from "../data/researchPapers";
+import { researchPapers as staticPapers, type ResearchPaper } from "../data/researchPapers";
 import styles from "./ResearchPage.module.css";
 
 export default function ResearchPage() {
-  const hasPapers = researchPapers.length > 0;
+  const [uploadedPapers, setUploadedPapers] = useState<ResearchPaper[]>([]);
+
+  useEffect(() => {
+    fetch("/api/papers")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setUploadedPapers(data))
+      .catch(() => {});
+  }, []);
+
+  const allPapers = [...staticPapers, ...uploadedPapers];
+  allPapers.sort((a, b) => b.year - a.year);
+  const hasPapers = allPapers.length > 0;
 
   return (
     <>
@@ -24,7 +36,7 @@ export default function ResearchPage() {
         <div className="container">
           {hasPapers ? (
             <div className={styles.grid}>
-              {researchPapers.map((paper) => (
+              {allPapers.map((paper) => (
                 <ResearchCard key={paper.id} paper={paper} />
               ))}
             </div>
@@ -32,13 +44,11 @@ export default function ResearchPage() {
             <div className="empty-state">
               <h2>Papers coming soon</h2>
               <p>
-                Research papers can be added in{" "}
-                <code>src/data/researchPapers.ts</code>. Place PDF files in{" "}
-                <code>public/papers/</code> and link them with <code>pdfUrl</code>.
+                Research papers will be added soon. Check back later for published
+                research and downloadable PDFs.
               </p>
               <p className={styles.hint}>
-                {profile.researchStats.papersPublished} papers are listed on the CV — add
-                each title, journal, year, and PDF to display them here.
+                {profile.researchStats.papersPublished} papers are listed on the CV.
               </p>
             </div>
           )}
