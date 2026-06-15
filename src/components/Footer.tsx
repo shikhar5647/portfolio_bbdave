@@ -19,6 +19,7 @@ export default function Footer() {
           <a href={profile.website} target="_blank" rel="noopener noreferrer">
             WordPress
           </a>
+          <Link to="/admin">Admin</Link>
         </nav>
         <p className={styles.copy}>
           © {year} {profile.name}. All rights reserved.
