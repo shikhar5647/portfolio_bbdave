@@ -1,12 +1,22 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Hero from "../components/Hero";
 import BlogCard from "../components/BlogCard";
 import { profile } from "../data/profile";
 import { blogs } from "../data/blogs";
+import { researchPapers as staticPapers } from "../data/researchPapers";
 import styles from "./HomePage.module.css";
 
 export default function HomePage() {
   const recentBlogs = blogs.slice(0, 3);
+  const [paperCount, setPaperCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/papers")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((uploaded) => setPaperCount(staticPapers.length + uploaded.length))
+      .catch(() => setPaperCount(staticPapers.length));
+  }, []);
 
   return (
     <>
@@ -29,7 +39,7 @@ export default function HomePage() {
           </div>
           <div className={styles.stats}>
             <div className={styles.stat}>
-              <span className={styles.statValue}>{profile.researchStats.papersPublished}</span>
+              <span className={styles.statValue}>{paperCount ?? "—"}</span>
               <span className={styles.statLabel}>Research papers published</span>
             </div>
             <div className={styles.stat}>

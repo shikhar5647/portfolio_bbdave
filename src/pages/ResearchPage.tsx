@@ -25,7 +25,7 @@ export default function ResearchPage() {
           <p className="section__label">Publications</p>
           <h1 className={styles.title}>Research Papers</h1>
           <p className={styles.subtitle}>
-            {profile.name} has published {profile.researchStats.papersPublished} research
+            {profile.name} has published {allPapers.length || profile.researchStats.papersPublished} research
             papers in national and international journals, with presentations at IIM Indore,
             management colleges in Guwahati, and Sardar Patel University, Anand.
           </p>
