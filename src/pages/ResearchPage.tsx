@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ResearchCard from "../components/ResearchCard";
-import { profile } from "../data/profile";
 import { researchPapers as staticPapers, type ResearchPaper } from "../data/researchPapers";
+import { profile } from "../data/profile";
 import styles from "./ResearchPage.module.css";
 
 export default function ResearchPage() {
@@ -25,7 +25,7 @@ export default function ResearchPage() {
           <p className="section__label">Publications</p>
           <h1 className={styles.title}>Research Papers</h1>
           <p className={styles.subtitle}>
-            {profile.name} has published {profile.researchStats.papersPublished} research
+            {profile.name} has published {allPapers.length || "—"} research
             papers in national and international journals, with presentations at IIM Indore,
             management colleges in Guwahati, and Sardar Patel University, Anand.
           </p>
@@ -46,9 +46,6 @@ export default function ResearchPage() {
               <p>
                 Research papers will be added soon. Check back later for published
                 research and downloadable PDFs.
-              </p>
-              <p className={styles.hint}>
-                {profile.researchStats.papersPublished} papers are listed on the CV.
               </p>
             </div>
           )}

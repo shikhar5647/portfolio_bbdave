@@ -22,14 +22,14 @@
   gap: 1.5rem;
 }
 
-.hint {
-  margin-top: 1rem;
-  font-size: 0.9375rem;
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.empty-state code {
-  font-size: 0.875em;
-  background: var(--color-bg-alt);
-  padding: 0.15em 0.4em;
-  border-radius: 4px;
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

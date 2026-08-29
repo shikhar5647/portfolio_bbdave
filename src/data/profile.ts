@@ -59,12 +59,11 @@ export const profile = {
   skills: [
     "Microsoft Insider for Windows and Microsoft Office since 2014",
     "Research presentations at IIM Indore, management colleges in Guwahati, and Sardar Patel University, Anand",
-    "28 research papers published in National and International Journals",
+    "Research papers published in National and International Journals",
     "International Finance",
     "Public administration and policy",
   ],
   researchStats: {
-    papersPublished: 28,
     affiliation: "NIL",
     researchGrant: "NIL",
   },
