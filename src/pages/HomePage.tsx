@@ -93,7 +93,11 @@ export default function HomePage() {
             <h3>Skills & Recognition</h3>
             <ul>
               {profile.skills.map((skill) => (
-                <li key={skill}>{skill}</li>
+                <li key={skill}>
+                  {skill === "Research papers published in National and International Journals" && paperCount
+                    ? `${paperCount} research papers published in National and International Journals`
+                    : skill}
+                </li>
               ))}
             </ul>
           </div>

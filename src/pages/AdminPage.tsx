@@ -138,6 +138,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
     const file = e.dataTransfer.files[0];
     if (file?.type === "application/pdf") {
       setPdfFile(file);
+      setError("");
     } else {
       setError("Please drop a PDF file");
     }
@@ -145,7 +146,10 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setPdfFile(file);
+    if (file) {
+      setPdfFile(file);
+      setError("");
+    }
   };
 
   const resetForm = () => {
@@ -157,6 +161,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) { setError("Title is required"); return; }
+    if (!pdfFile) { setError("Please select a PDF file to upload"); return; }
     setError(""); setSuccess(""); setUploading(true);
 
     const metadata = {
@@ -172,7 +177,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
 
     const formData = new FormData();
     formData.append("metadata", JSON.stringify(metadata));
-    if (pdfFile) formData.append("pdf", pdfFile);
+    formData.append("pdf", pdfFile);
 
     try {
       const res = await fetch("/api/papers", {
@@ -182,11 +187,12 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
       });
       if (res.status === 401) { setError("Invalid password."); setAuthenticated(false); return; }
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Upload failed"); }
-      setSuccess(`"${title}" uploaded successfully!`);
+      const saved = await res.json();
+      setSuccess(`"${saved.title}" uploaded successfully!${saved.pdfUrl ? " PDF saved." : ""}`);
       resetForm();
       fetchPapers();
     } catch (err: any) {
-      setError(err.message || "Upload failed");
+      setError(err.message || "Upload failed — please try again");
     } finally { setUploading(false); }
   };
 
@@ -205,7 +211,8 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
   return (
     <>
       <form onSubmit={handleSubmit} className={styles.form}>
-        <h2 className={styles.formTitle}>Add New Paper</h2>
+        <h2 className={styles.formTitle}>Upload Research Paper</h2>
+        <p className={styles.formHint}>Upload a PDF and fill in the paper details. Title and PDF are required.</p>
 
         <div
           className={`${styles.dropZone} ${dragOver ? styles.dropZoneActive : ""} ${pdfFile ? styles.dropZoneHasFile : ""}`}
@@ -218,20 +225,23 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
           {pdfFile ? (
             <div className={styles.fileInfo}>
               <span className={styles.fileIcon}>PDF</span>
-              <span className={styles.fileName}>{pdfFile.name}</span>
-              <span className={styles.fileSize}>{(pdfFile.size / 1024 / 1024).toFixed(1)} MB</span>
+              <div className={styles.fileDetails}>
+                <span className={styles.fileName}>{pdfFile.name}</span>
+                <span className={styles.fileSize}>{(pdfFile.size / 1024 / 1024).toFixed(1)} MB</span>
+              </div>
               <button type="button" className={styles.removeFile} onClick={(e) => { e.stopPropagation(); setPdfFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}>Remove</button>
             </div>
           ) : (
             <div className={styles.dropPrompt}>
               <span className={styles.dropIcon}>+</span>
-              <span>Drop PDF here or click to browse</span>
+              <span className={styles.dropLabel}>Drop PDF here or click to browse</span>
+              <span className={styles.dropHint}>PDF files only, max 4.5 MB</span>
             </div>
           )}
         </div>
 
         <div className={styles.fieldGroup}>
-          <label className={styles.label}>Title <span className={styles.required}>*</span></label>
+          <label className={styles.label}>Paper Title <span className={styles.required}>*</span></label>
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={styles.input} placeholder="Full title of the research paper" required />
         </div>
 
@@ -253,7 +263,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
 
         <div className={styles.fieldGroup}>
           <label className={styles.label}>Abstract</label>
-          <textarea value={abstract} onChange={(e) => setAbstract(e.target.value)} className={styles.textarea} rows={4} placeholder="Brief abstract of the paper" />
+          <textarea value={abstract} onChange={(e) => setAbstract(e.target.value)} className={styles.textarea} rows={3} placeholder="Brief abstract (optional)" />
         </div>
 
         <div className={styles.fieldRow}>
@@ -267,7 +277,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
           </div>
         </div>
 
-        <button type="submit" className="btn btn--primary" disabled={uploading}>
+        <button type="submit" className={`btn btn--primary ${styles.submitBtn}`} disabled={uploading}>
           {uploading ? "Uploading..." : "Upload Paper"}
         </button>
       </form>
@@ -277,13 +287,17 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
         {loading ? (
           <p className={styles.loadingText}>Loading papers...</p>
         ) : papers.length === 0 ? (
-          <p className={styles.emptyText}>No papers uploaded yet.</p>
+          <p className={styles.emptyText}>No papers uploaded yet. Use the form above to add your first paper.</p>
         ) : (
           papers.map((paper) => (
             <div key={paper.id} className={styles.paperItem}>
               <div className={styles.paperInfo}>
                 <strong>{paper.title}</strong>
-                <span className={styles.paperMeta}>{paper.year} {paper.journal && `— ${paper.journal}`}</span>
+                <span className={styles.paperMeta}>
+                  {paper.year}
+                  {paper.journal && ` — ${paper.journal}`}
+                  {paper.pdfUrl && " — PDF attached"}
+                </span>
               </div>
               <div className={styles.paperActions}>
                 {paper.pdfUrl && <a href={paper.pdfUrl} target="_blank" rel="noopener noreferrer" className={styles.viewLink}>View PDF</a>}
@@ -332,7 +346,6 @@ function BlogsManager({ password, setError, setSuccess, setAuthenticated }: Mana
     if (!blogContent.trim()) { setError("Content is required"); return; }
     setError(""); setSuccess(""); setPublishing(true);
 
-    // Wrap plain text paragraphs in <p> tags if content doesn't contain HTML
     let htmlContent = blogContent;
     if (!htmlContent.includes("<")) {
       htmlContent = blogContent
@@ -417,7 +430,7 @@ Separate paragraphs with a blank line.
 You can also paste HTML if you prefer." required />
         </div>
 
-        <button type="submit" className="btn btn--primary" disabled={publishing}>
+        <button type="submit" className={`btn btn--primary ${styles.submitBtn}`} disabled={publishing}>
           {publishing ? "Publishing..." : "Publish Post"}
         </button>
       </form>
