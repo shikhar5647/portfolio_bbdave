@@ -190,6 +190,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
       const data = await res.json().catch(() => null);
       if (!res.ok) { throw new Error(data?.error || `Upload failed (status ${res.status})`); }
       setSuccess(`"${data.title}" uploaded successfully!${data.pdfUrl ? " PDF saved." : ""}`);
+
       resetForm();
       fetchPapers();
     } catch (err: any) {
