@@ -162,6 +162,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
     e.preventDefault();
     if (!title.trim()) { setError("Title is required"); return; }
     if (!pdfFile) { setError("Please select a PDF file to upload"); return; }
+    if (pdfFile.size > 4.5 * 1024 * 1024) { setError("PDF file is too large (max 4.5 MB)"); return; }
     setError(""); setSuccess(""); setUploading(true);
 
     const metadata = {
@@ -186,9 +187,9 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
         body: formData,
       });
       if (res.status === 401) { setError("Invalid password."); setAuthenticated(false); return; }
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Upload failed"); }
-      const saved = await res.json();
-      setSuccess(`"${saved.title}" uploaded successfully!${saved.pdfUrl ? " PDF saved." : ""}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok) { throw new Error(data?.error || `Upload failed (status ${res.status})`); }
+      setSuccess(`"${data.title}" uploaded successfully!${data.pdfUrl ? " PDF saved." : ""}`);
       resetForm();
       fetchPapers();
     } catch (err: any) {
