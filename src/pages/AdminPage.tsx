@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { upload } from "@vercel/blob/client";
 import type { ResearchPaper } from "../data/researchPapers";
 import type { BlogPost } from "../data/blogs";
 import styles from "./AdminPage.module.css";
@@ -162,34 +163,37 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
     e.preventDefault();
     if (!title.trim()) { setError("Title is required"); return; }
     if (!pdfFile) { setError("Please select a PDF file to upload"); return; }
-    if (pdfFile.size > 4.5 * 1024 * 1024) { setError("PDF file is too large (max 4.5 MB)"); return; }
+    if (pdfFile.size > 10 * 1024 * 1024) { setError("PDF file is too large (max 10 MB)"); return; }
     setError(""); setSuccess(""); setUploading(true);
 
-    const metadata = {
-      id: `paper-${Date.now()}`,
-      title: title.trim(),
-      authors: authors.split(",").map((a) => a.trim()).filter(Boolean),
-      journal: journal.trim() || undefined,
-      year,
-      abstract: abstract.trim() || undefined,
-      doi: doi.trim() || undefined,
-      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-    };
-
-    const formData = new FormData();
-    formData.append("metadata", JSON.stringify(metadata));
-    formData.append("pdf", pdfFile);
-
     try {
+      const blob = await upload(pdfFile.name, pdfFile, {
+        access: "public",
+        handleUploadUrl: "/api/upload",
+        clientPayload: JSON.stringify({ password }),
+      });
+
+      const metadata = {
+        id: `paper-${Date.now()}`,
+        title: title.trim(),
+        authors: authors.split(",").map((a) => a.trim()).filter(Boolean),
+        journal: journal.trim() || undefined,
+        year,
+        abstract: abstract.trim() || undefined,
+        doi: doi.trim() || undefined,
+        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        pdfUrl: blob.url,
+      };
+
       const res = await fetch("/api/papers", {
         method: "POST",
-        headers: { "x-admin-password": password },
-        body: formData,
+        headers: { "Content-Type": "application/json", "x-admin-password": password },
+        body: JSON.stringify(metadata),
       });
       if (res.status === 401) { setError("Invalid password."); setAuthenticated(false); return; }
       const data = await res.json().catch(() => null);
-      if (!res.ok) { throw new Error(data?.error || `Upload failed (status ${res.status})`); }
-      setSuccess(`"${data.title}" uploaded successfully!${data.pdfUrl ? " PDF saved." : ""}`);
+      if (!res.ok) { throw new Error(data?.error || `Save failed (status ${res.status})`); }
+      setSuccess(`"${data.title}" uploaded successfully! PDF saved.`);
 
       resetForm();
       fetchPapers();
@@ -237,7 +241,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
             <div className={styles.dropPrompt}>
               <span className={styles.dropIcon}>+</span>
               <span className={styles.dropLabel}>Drop PDF here or click to browse</span>
-              <span className={styles.dropHint}>PDF files only, max 4.5 MB</span>
+              <span className={styles.dropHint}>PDF files only, max 10 MB</span>
             </div>
           )}
         </div>
