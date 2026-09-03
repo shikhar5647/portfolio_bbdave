@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         return {
           allowedContentTypes: ["application/pdf"],
-          maximumSizeInBytes: 10 * 1024 * 1024,
+          maximumSizeInBytes: 500 * 1024 * 1024,
         };
       },
       onUploadCompleted: async () => {},

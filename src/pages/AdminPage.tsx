@@ -163,7 +163,6 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
     e.preventDefault();
     if (!title.trim()) { setError("Title is required"); return; }
     if (!pdfFile) { setError("Please select a PDF file to upload"); return; }
-    if (pdfFile.size > 10 * 1024 * 1024) { setError("PDF file is too large (max 10 MB)"); return; }
     setError(""); setSuccess(""); setUploading(true);
 
     try {
@@ -241,7 +240,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
             <div className={styles.dropPrompt}>
               <span className={styles.dropIcon}>+</span>
               <span className={styles.dropLabel}>Drop PDF here or click to browse</span>
-              <span className={styles.dropHint}>PDF files only, max 10 MB</span>
+              <span className={styles.dropHint}>PDF files only</span>
             </div>
           )}
         </div>
