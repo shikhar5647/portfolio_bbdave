@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { upload } from "@vercel/blob/client";
 import type { ResearchPaper } from "../data/researchPapers";
 import type { BlogPost } from "../data/blogs";
 import styles from "./AdminPage.module.css";
@@ -166,14 +165,22 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
     setError(""); setSuccess(""); setUploading(true);
 
     try {
-      const blob = await upload(pdfFile.name, pdfFile, {
-        access: "public",
-        handleUploadUrl: "/api/upload",
-        clientPayload: JSON.stringify({ password }),
+      const id = `paper-${Date.now()}`;
+
+      const uploadRes = await fetch("/api/upload-pdf", {
+        method: "POST",
+        headers: {
+          "x-admin-password": password,
+          "x-filename": `${id}.pdf`,
+        },
+        body: pdfFile,
       });
+      if (uploadRes.status === 401) { setError("Invalid password."); setAuthenticated(false); return; }
+      const uploadData = await uploadRes.json().catch(() => null);
+      if (!uploadRes.ok) { throw new Error(uploadData?.error || "PDF upload failed"); }
 
       const metadata = {
-        id: `paper-${Date.now()}`,
+        id,
         title: title.trim(),
         authors: authors.split(",").map((a) => a.trim()).filter(Boolean),
         journal: journal.trim() || undefined,
@@ -181,7 +188,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
         abstract: abstract.trim() || undefined,
         doi: doi.trim() || undefined,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-        pdfUrl: blob.url,
+        pdfUrl: uploadData.url,
       };
 
       const res = await fetch("/api/papers", {
