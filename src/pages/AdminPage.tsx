@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { put } from "@vercel/blob/client";
 import type { ResearchPaper } from "../data/researchPapers";
 import type { BlogPost } from "../data/blogs";
 import styles from "./AdminPage.module.css";
 
 type Tab = "papers" | "blogs";
+
+const DIRECT_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
 
 export default function AdminPage() {
   const [password, setPassword] = useState("");
@@ -108,6 +111,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const [title, setTitle] = useState("");
@@ -167,17 +171,41 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
     try {
       const id = `paper-${Date.now()}`;
 
-      const uploadRes = await fetch("/api/upload-pdf", {
-        method: "POST",
-        headers: {
-          "x-admin-password": password,
-          "x-filename": `${id}.pdf`,
-        },
-        body: pdfFile,
-      });
-      if (uploadRes.status === 401) { setError("Invalid password."); setAuthenticated(false); return; }
-      const uploadData = await uploadRes.json().catch(() => null);
-      if (!uploadRes.ok) { throw new Error(uploadData?.error || "PDF upload failed"); }
+      let pdfUrl: string;
+      if (pdfFile.size <= DIRECT_UPLOAD_MAX_BYTES) {
+        const uploadRes = await fetch("/api/upload-pdf", {
+          method: "POST",
+          headers: {
+            "x-admin-password": password,
+            "x-filename": `${id}.pdf`,
+          },
+          body: pdfFile,
+        });
+        if (uploadRes.status === 401) { setError("Invalid password."); setAuthenticated(false); return; }
+        const uploadData = await uploadRes.json().catch(() => null);
+        if (!uploadRes.ok) { throw new Error(uploadData?.error || "PDF upload failed"); }
+        pdfUrl = uploadData.url;
+      } else {
+        // Vercel functions reject bodies over 4.5 MB, so large files go straight to Blob storage.
+        const tokenRes = await fetch("/api/upload-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-admin-password": password },
+          body: JSON.stringify({ filename: `${id}.pdf` }),
+        });
+        if (tokenRes.status === 401) { setError("Invalid password."); setAuthenticated(false); return; }
+        const tokenData = await tokenRes.json().catch(() => null);
+        if (!tokenRes.ok || !tokenData?.token) {
+          throw new Error(tokenData?.error || `Could not start upload (status ${tokenRes.status})`);
+        }
+        const blob = await put(tokenData.pathname, pdfFile, {
+          access: "public",
+          token: tokenData.token,
+          contentType: "application/pdf",
+          multipart: true,
+          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+        });
+        pdfUrl = blob.url;
+      }
 
       const metadata = {
         id,
@@ -188,7 +216,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
         abstract: abstract.trim() || undefined,
         doi: doi.trim() || undefined,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-        pdfUrl: uploadData.url,
+        pdfUrl,
       };
 
       const res = await fetch("/api/papers", {
@@ -205,7 +233,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
       fetchPapers();
     } catch (err: any) {
       setError(err.message || "Upload failed — please try again");
-    } finally { setUploading(false); }
+    } finally { setUploading(false); setProgress(null); }
   };
 
   const handleDelete = async (id: string, paperTitle: string) => {
@@ -290,7 +318,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
         </div>
 
         <button type="submit" className={`btn btn--primary ${styles.submitBtn}`} disabled={uploading}>
-          {uploading ? "Uploading..." : "Upload Paper"}
+          {uploading ? (progress !== null ? `Uploading... ${progress}%` : "Uploading...") : "Upload Paper"}
         </button>
       </form>
 
