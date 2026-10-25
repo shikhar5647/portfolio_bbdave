@@ -5,15 +5,22 @@ function unauthorized(res: VercelResponse) {
   return res.status(401).json({ error: "Unauthorized" });
 }
 
+// Accepted papers live under papers/meta/; written (submitted / under review) papers under written-papers/meta/.
+function metaPrefix(req: VercelRequest): string {
+  return req.query.kind === "written" ? "written-papers/meta/" : "papers/meta/";
+}
+
 function checkAuth(req: VercelRequest): boolean {
   const password = req.headers["x-admin-password"] as string | undefined;
   return password === process.env.ADMIN_PASSWORD;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const prefix = metaPrefix(req);
+
   if (req.method === "GET") {
     try {
-      const { blobs } = await list({ prefix: "papers/meta/" });
+      const { blobs } = await list({ prefix });
       const papers = await Promise.all(
         blobs.map(async (blob) => {
           const resp = await fetch(blob.url);
@@ -39,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     metadata.id = id;
 
     try {
-      await put(`papers/meta/${id}.json`, JSON.stringify(metadata), {
+      await put(`${prefix}${id}.json`, JSON.stringify(metadata), {
         access: "public",
         contentType: "application/json",
       });
@@ -58,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-      const { blobs: metaBlobs } = await list({ prefix: `papers/meta/${id}.json` });
+      const { blobs: metaBlobs } = await list({ prefix: `${prefix}${id}.json` });
       const { blobs: pdfBlobs } = await list({ prefix: `papers/pdf/${id}.pdf` });
 
       const urls = [...metaBlobs, ...pdfBlobs].map((b) => b.url);

@@ -4,18 +4,26 @@ import Hero from "../components/Hero";
 import BlogCard from "../components/BlogCard";
 import { profile } from "../data/profile";
 import { blogs } from "../data/blogs";
-import { researchPapers as staticPapers } from "../data/researchPapers";
+import {
+  researchPapers as staticPapers,
+  writtenPapers as staticWrittenPapers,
+} from "../data/researchPapers";
 import styles from "./HomePage.module.css";
 
 export default function HomePage() {
   const recentBlogs = blogs.slice(0, 3);
   const [paperCount, setPaperCount] = useState<number | null>(null);
+  const [writtenCount, setWrittenCount] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/papers")
       .then((res) => (res.ok ? res.json() : []))
       .then((uploaded) => setPaperCount(staticPapers.length + uploaded.length))
       .catch(() => setPaperCount(staticPapers.length));
+    fetch("/api/papers?kind=written")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((uploaded) => setWrittenCount(staticWrittenPapers.length + uploaded.length))
+      .catch(() => setWrittenCount(staticWrittenPapers.length));
   }, []);
 
   return (
@@ -41,6 +49,10 @@ export default function HomePage() {
             <div className={styles.stat}>
               <span className={styles.statValue}>{paperCount ?? "—"}</span>
               <span className={styles.statLabel}>Research papers published</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statValue}>{writtenCount ?? "—"}</span>
+              <span className={styles.statLabel}>Research papers written (under review)</span>
             </div>
             <div className={styles.stat}>
               <span className={styles.statValue}>39+</span>

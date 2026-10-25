@@ -4,7 +4,8 @@ import type { ResearchPaper } from "../data/researchPapers";
 import type { BlogPost } from "../data/blogs";
 import styles from "./AdminPage.module.css";
 
-type Tab = "papers" | "blogs";
+type Tab = "papers" | "written" | "blogs";
+type PaperKind = "accepted" | "written";
 
 const DIRECT_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
 
@@ -60,7 +61,13 @@ export default function AdminPage() {
               className={`${styles.tab} ${activeTab === "papers" ? styles.tabActive : ""}`}
               onClick={() => { setActiveTab("papers"); clearMessages(); }}
             >
-              Research Papers
+              Accepted Papers
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === "written" ? styles.tabActive : ""}`}
+              onClick={() => { setActiveTab("written"); clearMessages(); }}
+            >
+              Written Papers
             </button>
             <button
               className={`${styles.tab} ${activeTab === "blogs" ? styles.tabActive : ""}`}
@@ -77,8 +84,10 @@ export default function AdminPage() {
           {error && <div className={styles.alert + " " + styles.alertError}>{error}</div>}
           {success && <div className={styles.alert + " " + styles.alertSuccess}>{success}</div>}
 
-          {activeTab === "papers" ? (
+          {activeTab === "papers" || activeTab === "written" ? (
             <PapersManager
+              key={activeTab}
+              kind={activeTab === "written" ? "written" : "accepted"}
               password={password}
               setError={setError}
               setSuccess={setSuccess}
@@ -107,7 +116,13 @@ interface ManagerProps {
   setAuthenticated: (v: boolean) => void;
 }
 
-function PapersManager({ password, setError, setSuccess, setAuthenticated }: ManagerProps) {
+interface PapersManagerProps extends ManagerProps {
+  kind: PaperKind;
+}
+
+function PapersManager({ kind, password, setError, setSuccess, setAuthenticated }: PapersManagerProps) {
+  const isWritten = kind === "written";
+  const papersApi = isWritten ? "/api/papers?kind=written" : "/api/papers";
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -128,11 +143,11 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
   const fetchPapers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/papers");
+      const res = await fetch(papersApi);
       if (res.ok) setPapers(await res.json());
     } catch { /* ignore */ }
     finally { setLoading(false); }
-  }, []);
+  }, [papersApi]);
 
   useEffect(() => { fetchPapers(); }, [fetchPapers]);
 
@@ -165,14 +180,16 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) { setError("Title is required"); return; }
-    if (!pdfFile) { setError("Please select a PDF file to upload"); return; }
+    if (!pdfFile && !isWritten) { setError("Please select a PDF file to upload"); return; }
     setError(""); setSuccess(""); setUploading(true);
 
     try {
-      const id = `paper-${Date.now()}`;
+      const id = `${isWritten ? "written" : "paper"}-${Date.now()}`;
 
-      let pdfUrl: string;
-      if (pdfFile.size <= DIRECT_UPLOAD_MAX_BYTES) {
+      let pdfUrl: string | undefined;
+      if (!pdfFile) {
+        pdfUrl = undefined;
+      } else if (pdfFile.size <= DIRECT_UPLOAD_MAX_BYTES) {
         const uploadRes = await fetch("/api/upload-pdf", {
           method: "POST",
           headers: {
@@ -219,7 +236,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
         pdfUrl,
       };
 
-      const res = await fetch("/api/papers", {
+      const res = await fetch(papersApi, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-password": password },
         body: JSON.stringify(metadata),
@@ -227,7 +244,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
       if (res.status === 401) { setError("Invalid password."); setAuthenticated(false); return; }
       const data = await res.json().catch(() => null);
       if (!res.ok) { throw new Error(data?.error || `Save failed (status ${res.status})`); }
-      setSuccess(`"${data.title}" uploaded successfully! PDF saved.`);
+      setSuccess(`"${data.title}" uploaded successfully!${pdfUrl ? " PDF saved." : ""}`);
 
       resetForm();
       fetchPapers();
@@ -239,7 +256,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
   const handleDelete = async (id: string, paperTitle: string) => {
     if (!confirm(`Delete "${paperTitle}"?`)) return;
     try {
-      const res = await fetch(`/api/papers?id=${encodeURIComponent(id)}`, {
+      const res = await fetch(`/api/papers?${isWritten ? "kind=written&" : ""}id=${encodeURIComponent(id)}`, {
         method: "DELETE",
         headers: { "x-admin-password": password },
       });
@@ -251,8 +268,12 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
   return (
     <>
       <form onSubmit={handleSubmit} className={styles.form}>
-        <h2 className={styles.formTitle}>Upload Research Paper</h2>
-        <p className={styles.formHint}>Upload a PDF and fill in the paper details. Title and PDF are required.</p>
+        <h2 className={styles.formTitle}>{isWritten ? "Add Written Paper" : "Upload Research Paper"}</h2>
+        <p className={styles.formHint}>
+          {isWritten
+            ? "Add a paper that has been written or submitted but not yet accepted. Title is required; PDF is optional."
+            : "Upload a PDF and fill in the paper details. Title and PDF are required."}
+        </p>
 
         <div
           className={`${styles.dropZone} ${dragOver ? styles.dropZoneActive : ""} ${pdfFile ? styles.dropZoneHasFile : ""}`}
@@ -275,7 +296,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
             <div className={styles.dropPrompt}>
               <span className={styles.dropIcon}>+</span>
               <span className={styles.dropLabel}>Drop PDF here or click to browse</span>
-              <span className={styles.dropHint}>PDF files only</span>
+              <span className={styles.dropHint}>{isWritten ? "PDF files only (optional)" : "PDF files only"}</span>
             </div>
           )}
         </div>
@@ -297,7 +318,7 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
         </div>
 
         <div className={styles.fieldGroup}>
-          <label className={styles.label}>Journal / Conference</label>
+          <label className={styles.label}>{isWritten ? "Submitted To (Journal / Conference)" : "Journal / Conference"}</label>
           <input type="text" value={journal} onChange={(e) => setJournal(e.target.value)} className={styles.input} placeholder="Name of journal or conference" />
         </div>
 
@@ -318,16 +339,18 @@ function PapersManager({ password, setError, setSuccess, setAuthenticated }: Man
         </div>
 
         <button type="submit" className={`btn btn--primary ${styles.submitBtn}`} disabled={uploading}>
-          {uploading ? (progress !== null ? `Uploading... ${progress}%` : "Uploading...") : "Upload Paper"}
+          {uploading ? (progress !== null ? `Uploading... ${progress}%` : "Uploading...") : isWritten ? "Add Written Paper" : "Upload Paper"}
         </button>
       </form>
 
       <div className={styles.paperList}>
-        <h2 className={styles.formTitle}>Uploaded Papers {!loading && `(${papers.length})`}</h2>
+        <h2 className={styles.formTitle}>{isWritten ? "Written Papers" : "Uploaded Papers"} {!loading && `(${papers.length})`}</h2>
         {loading ? (
           <p className={styles.loadingText}>Loading papers...</p>
         ) : papers.length === 0 ? (
-          <p className={styles.emptyText}>No papers uploaded yet. Use the form above to add your first paper.</p>
+          <p className={styles.emptyText}>
+            {isWritten ? "No written papers added yet." : "No papers uploaded yet."} Use the form above to add your first paper.
+          </p>
         ) : (
           papers.map((paper) => (
             <div key={paper.id} className={styles.paperItem}>

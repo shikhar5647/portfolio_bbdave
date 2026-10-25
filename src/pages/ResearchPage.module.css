@@ -33,3 +33,9 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.sectionIntro {
+  margin: -0.5rem 0 2rem;
+  color: var(--color-ink-muted);
+  max-width: 65ch;
+}

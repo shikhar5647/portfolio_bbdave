@@ -27,3 +27,9 @@ export const researchPapers: ResearchPaper[] = [
   //   tags: ["Public Policy", "Finance"],
   // },
 ];
+
+/**
+ * Written papers — submitted or under review, not yet accepted.
+ * These appear in the "Written Papers" section of the Research page.
+ */
+export const writtenPapers: ResearchPaper[] = [];

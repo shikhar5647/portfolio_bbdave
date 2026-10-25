@@ -22,23 +22,25 @@ export default function ResearchCard({ paper }: ResearchCardProps) {
           ))}
         </ul>
       )}
-      <div className={styles.links}>
-        {paper.pdfUrl && (
-          <a href={paper.pdfUrl} className={styles.link} target="_blank" rel="noopener noreferrer">
-            Download PDF
-          </a>
-        )}
-        {paper.doi && (
-          <a
-            href={`https://doi.org/${paper.doi}`}
-            className={styles.link}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            DOI
-          </a>
-        )}
-      </div>
+      {(paper.pdfUrl || paper.doi) && (
+        <div className={styles.links}>
+          {paper.pdfUrl && (
+            <a href={paper.pdfUrl} className={styles.link} target="_blank" rel="noopener noreferrer">
+              Download PDF
+            </a>
+          )}
+          {paper.doi && (
+            <a
+              href={`https://doi.org/${paper.doi}`}
+              className={styles.link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              DOI
+            </a>
+          )}
+        </div>
+      )}
     </article>
   );
 }
